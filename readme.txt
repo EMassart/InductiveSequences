@@ -15,4 +15,6 @@
 - All other method's implementations are in the "methods" folder.
 
 
-Last update : March 27, 2017.
+This is the second version : June 15, 2017.
+
+First version : March 27, 2017.
