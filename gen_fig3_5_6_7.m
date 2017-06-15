@@ -17,42 +17,53 @@ n_test = 30;     %take more datasets when working with few small matrices to rem
 load random_generator.mat;
 rng(s);
  
+%for figure 3
+options1.test3 = 1;
 disp('-------------------------------------------------Test 1');
 options1.str = ('approx_k3_n3_f1.mat');
 validation_opti(n_test,3,3,1,options1,10^(-6));
 
 disp('-------------------------------------------------Test 2');
+options1.str = ('approx_k50_n3_f1.mat');
+validation_opti(n_test,50,3,1,options1,10^(-6));
+
+disp('-------------------------------------------------Test 3');
+options1.str = ('approx_k10_n100_f1.mat');
+validation_opti(n_test,10,100,1,options1,10^(-6));
+
+disp('-------------------------------------------------Test 4');
+options1.str = ('approx_k10_n3_f5.mat');
+validation_opti(n_test,10,3,5,options1,10^(-6));
+
+
+
+% for figures 5 - 6 - 7
+options1.test3 = 0;
+disp('-------------------------------------------------Test 5');
+options1.str = ('approx_k3_n3_f1_v2.mat');
+validation_opti(n_test,3,3,1,options1,10^(-6));
+
+disp('-------------------------------------------------Test 6');
 options1.str = ('approx_k3_n3_f5.mat');
 validation_opti(n_test,3,3,5,options1,10^(-6));
 
 n_test = 10;
-disp('-------------------------------------------------Test 3');
+disp('-------------------------------------------------Test 7');
 options1.str = ('approx_k100_n3_f1.mat');
 validation_opti(n_test,100,3,1,options1,10^(-6));
 
-disp('-------------------------------------------------Test 4');
+disp('-------------------------------------------------Test 8');
 options1.str = ('approx_k100_n3_f5.mat');
 validation_opti(n_test,100,3,5,options1,10^(-6));
 
-disp('-------------------------------------------------Test 5');
+disp('-------------------------------------------------Test 9');
 options1.str = ('approx_k30_n100_f1.mat');
 validation_opti(n_test,30,100,1,options1,10^(-6));
 
-disp('-------------------------------------------------Test 6');
+disp('-------------------------------------------------Test 10');
 options1.str = ('approx_k30_n100_f5.mat');
 validation_opti(n_test,30,100,5,options1,10^(-6));
 
-disp('-------------------------------------------------Test 7');
-options1.str = ('approx_k50_n3_f1.mat');
-validation_opti(n_test,50,3,1,options1,10^(-6));
-
-disp('-------------------------------------------------Test 8');
-options1.str = ('approx_k10_n100_f1.mat');
-validation_opti(n_test,10,100,1,options1,10^(-6));
-
-disp('-------------------------------------------------Test 9');
-options1.str = ('approx_k10_n3_f5.mat');
-validation_opti(n_test,10,3,5,options1,10^(-6));
 
 
 
@@ -78,7 +89,7 @@ for i_plot = 1:4
     subplot(2,4,i_plot);
     c = 1;
     for i = 1:n_methods
-        h(i) = semilogy(qGeo.timeM(c:c+length(qGeo.maxiter{i})-1),qGeo.distM(c:c+length(qGeo.maxiter{i})-1),linestyle{i},'Color',col(i,:)); hold on;
+        h(i) = loglog(qGeo.timeM(c:c+length(qGeo.maxiter{i})-1),qGeo.distM(c:c+length(qGeo.maxiter{i})-1),linestyle{i},'Color',col(i,:)); hold on;
         c = c+length(qGeo.maxiter{i});
     end
     xlabel('Time [s]','Fontsize',9);
@@ -101,7 +112,7 @@ end
 
 %%-----------------------------------------------------Plots figures 5, 6 and 7
 clc;
-file{1} = {'approx_k3_n3_f1.mat','approx_k3_n3_f5.mat'};
+file{1} = {'approx_k3_n3_f1_v2.mat','approx_k3_n3_f5.mat'};
 file{2} = {'approx_k100_n3_f1.mat','approx_k100_n3_f5.mat'};
 file{3} = {'approx_k30_n100_f1.mat','approx_k30_n100_f5.mat'};
 meth_ref = 2;
