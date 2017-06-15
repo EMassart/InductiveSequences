@@ -1,6 +1,8 @@
 function [qGeo,opti] = validation_opti(n_test,k,n,f,options_glob,tol)
 % Generates the validation plots
 % Author: E. Massart
+% options_glob.test3 is a boolean variable equal to 1 is the goal is to
+% generate figure 3, and zero otherwise.
 
 methods = {'arithm','arithm_harmo','explog','cheap','Inductive'};
 names = {'Arithmetic','Arithm-Harmo','Log-Euclidean','Cheap','Shuffled Inductive'};
@@ -8,7 +10,7 @@ names = {'Arithmetic','Arithm-Harmo','Log-Euclidean','Cheap','Shuffled Inductive
 if ~exist('options_glob','var')
     options_glob = struct();
 end
-
+    
 n_methods = length(methods);
 
 %params for the first test: computes quasi_geometric means
@@ -16,7 +18,7 @@ qGeo = struct();
 qGeo.maxiter = cell(1,length(methods));
 qGeo.maxiter(1:3) = {1};
 qGeo.maxiter(4) = {1:5};
-qGeo.maxiter(5) = {1:10};
+qGeo.maxiter(5) = {1:100};
 qGeo.n_methods = length(cat(2,qGeo.maxiter{:}));         % total number of quasi-geometric means
 qGeo.time = zeros(n_test, qGeo.n_methods);
 qGeo.dist = zeros(n_test, qGeo.n_methods);
@@ -92,62 +94,66 @@ while i_test <= n_test
     end
     
     
-    % Test 2 : SD method
-    stop_SD = 0;
-    optionsKarcher.MStart =  eye(problem.size);
-    karcher( A, optionsKarcher );  
-    for i_meth = 1:opti.n_methods
-        optionsKarcher.MStart = M_start{i_meth} ;
-        [~,info] = karcher( A, optionsKarcher );
-        for i = 1:length(info.M_rec)
-            opti.dist(1,i_test,i_meth,i) = dist_mat(info.M_rec{i},Kmean)./d_ref(i_test);
-            opti.time(1,i_test,i_meth,i) = info.t(i);
-        end
-        if length(info.M_rec)<optionsKarcher.maxiter                            %if the method converges before reaching the max number of iterations, the remaining zeros are replaced by the last accuracy obtained.
-            opti.dist(1,i_test,i_meth,length(info.M_rec)+1:end) = opti.dist(1,i_test,i_meth,length(info.M_rec));
-            opti.time(1,i_test,i_meth,length(info.M_rec)+1:end) = opti.time(1,i_test,i_meth,length(info.M_rec));
-        end
-        if ~isempty(find(reshape(opti.dist(1,i_test,i_meth,:),1,optionsKarcher.maxiter)<tol*d_ref(i_test),1))
-            opti.kStop(1,i_test,i_meth) = find(reshape(opti.dist(1,i_test,i_meth,:),1,optionsKarcher.maxiter)<tol*d_ref(i_test),1);
-            opti.tStop(1,i_test,i_meth) = opti.time(1,i_test,i_meth,opti.kStop(1,i_test,i_meth));
-        else 
-            i_test = i_test-1;
-            stop_SD = 1;
-            fprintf('Convergence SD failed: max number of iteration reached before reaching tol of %14.8e, method %d \n',tol,i_meth);
-            break;
-        end
-    end
-    
-    if ~stop_SD                                                             %if SD converges properly on the current dataset, try to run the LRBFGS method using the same data points. Otherwise, generate a new data set.
-        % Test 2 : LRBFGS method
-        optionsLRBFGS.MStart = eye(problem.size);
-        LRBFGS_toolbox( A, optionsLRBFGS );
+    if (~isfield(options_glob, 'test3') ||  options_glob.test3~=1)          %this part of the test is not needed to generate figure 3
+        
+        % Test 2 : SD method
+        stop_SD = 0;
+        optionsKarcher.MStart =  eye(problem.size);
+        karcher( A, optionsKarcher );                                        
         for i_meth = 1:opti.n_methods
-            optionsLRBFGS.MStart = M_start{i_meth};
-            [~,info] = LRBFGS_toolbox( A, optionsLRBFGS );
-            if info.status >= 0
-                for i = 2:length(info.M_rec)
-                    opti.dist(2,i_test,i_meth,i-1) = dist_mat(info.M_rec{i}.U,Kmean)./d_ref(i_test);
-                    opti.time(2,i_test,i_meth,i-1) = info.t(i);
-                end
-                if length(info.M_rec)-1<optionsLRBFGS.maxiter                   %if the method converges before reaching the max number of iterations, the remaining zeros are replaced by the last accuracy obtained.
-                    opti.dist(2,i_test,i_meth,length(info.M_rec):end) = opti.dist(2,i_test,i_meth,length(info.M_rec)-1);
-                    opti.time(2,i_test,i_meth,length(info.M_rec):end) = opti.time(2,i_test,i_meth,length(info.M_rec)-1);
-                end
-                if ~isempty(find(reshape(opti.dist(2,i_test,i_meth,:),1,optionsLRBFGS.maxiter)<tol*d_ref(i_test),1))
-                    opti.kStop(2,i_test,i_meth) = find(reshape(opti.dist(2,i_test,i_meth,:),1,optionsLRBFGS.maxiter)<tol*d_ref(i_test),1);
-                    opti.tStop(2,i_test,i_meth) = opti.time(2,i_test,i_meth,opti.kStop(2,i_test,i_meth));
-                else
-                    i_test = i_test-1;
-                    fprintf('Convergence LRBFGS failed: max number of iteration reached before reaching tol of %14.8e, method %d \n',tol,i_meth);
-                    break;
-                end
-            else
+            optionsKarcher.MStart = M_start{i_meth} ;
+            [~,info] = karcher( A, optionsKarcher );
+            for i = 1:length(info.M_rec)
+                opti.dist(1,i_test,i_meth,i) = dist_mat(info.M_rec{i},Kmean)./d_ref(i_test);
+                opti.time(1,i_test,i_meth,i) = info.t(i);
+            end
+            if length(info.M_rec)<optionsKarcher.maxiter                            %if the method converges before reaching the max number of iterations, the remaining zeros are replaced by the last accuracy obtained.
+                opti.dist(1,i_test,i_meth,length(info.M_rec)+1:end) = opti.dist(1,i_test,i_meth,length(info.M_rec));
+                opti.time(1,i_test,i_meth,length(info.M_rec)+1:end) = opti.time(1,i_test,i_meth,length(info.M_rec));
+            end
+            if ~isempty(find(reshape(opti.dist(1,i_test,i_meth,:),1,optionsKarcher.maxiter)<tol*d_ref(i_test),1))
+                opti.kStop(1,i_test,i_meth) = find(reshape(opti.dist(1,i_test,i_meth,:),1,optionsKarcher.maxiter)<tol*d_ref(i_test),1);
+                opti.tStop(1,i_test,i_meth) = opti.time(1,i_test,i_meth,opti.kStop(1,i_test,i_meth));
+            else 
                 i_test = i_test-1;
-                fprintf('Convergence LRBFGS failed, method %d \n',i_meth);
+                stop_SD = 1;
+                fprintf('Convergence SD failed: max number of iteration reached before reaching tol of %14.8e, method %d \n',tol,i_meth);
                 break;
             end
         end
+
+        if ~stop_SD                                                             %if SD converges properly on the current dataset, try to run the LRBFGS method using the same data points. Otherwise, generate a new data set.
+            % Test 3 : LRBFGS method
+            optionsLRBFGS.MStart = eye(problem.size);
+            LRBFGS_toolbox( A, optionsLRBFGS );
+            for i_meth = 1:opti.n_methods
+                optionsLRBFGS.MStart = M_start{i_meth};
+                [~,info] = LRBFGS_toolbox( A, optionsLRBFGS );
+                if info.status >= 0
+                    for i = 2:length(info.M_rec)
+                        opti.dist(2,i_test,i_meth,i-1) = dist_mat(info.M_rec{i}.U,Kmean)./d_ref(i_test);
+                        opti.time(2,i_test,i_meth,i-1) = info.t(i);
+                    end
+                    if length(info.M_rec)-1<optionsLRBFGS.maxiter                   %if the method converges before reaching the max number of iterations, the remaining zeros are replaced by the last accuracy obtained.
+                        opti.dist(2,i_test,i_meth,length(info.M_rec):end) = opti.dist(2,i_test,i_meth,length(info.M_rec)-1);
+                        opti.time(2,i_test,i_meth,length(info.M_rec):end) = opti.time(2,i_test,i_meth,length(info.M_rec)-1);
+                    end
+                    if ~isempty(find(reshape(opti.dist(2,i_test,i_meth,:),1,optionsLRBFGS.maxiter)<tol*d_ref(i_test),1))
+                        opti.kStop(2,i_test,i_meth) = find(reshape(opti.dist(2,i_test,i_meth,:),1,optionsLRBFGS.maxiter)<tol*d_ref(i_test),1);
+                        opti.tStop(2,i_test,i_meth) = opti.time(2,i_test,i_meth,opti.kStop(2,i_test,i_meth));
+                    else
+                        i_test = i_test-1;
+                        fprintf('Convergence LRBFGS failed: max number of iteration reached before reaching tol of %14.8e, method %d \n',tol,i_meth);
+                        break;
+                    end
+                else
+                    i_test = i_test-1;
+                    fprintf('Convergence LRBFGS failed, method %d \n',i_meth);
+                    break;
+                end
+            end
+        end
+
     end
     i_test = i_test+1;
 end
